@@ -418,7 +418,6 @@ export default function PaymentModal({ guest, isOpen, onClose, onUpdateSuccess }
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     className="hidden"
                     onChange={handleFileChange}
                   />
