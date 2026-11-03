@@ -125,6 +125,13 @@ export default function InviteCard({ guest, onAttendClick, onDeclineClick, onLog
         )}
       </div>
 
+      {isPending && (
+        <p className="mt-4 text-center text-sm text-[#D5CEBD] leading-relaxed">
+          Please click <strong className="text-[#ECA836]">Attending</strong> or{' '}
+          <strong className="text-[#ECA836]">Not Attending</strong> on the poster above to let us know.
+        </p>
+      )}
+
       {/* Payment summary for confirmed guests */}
       {isAttending && (guest.payment_method || guest.reference_no || guest.payment_receipt_url) && (
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
