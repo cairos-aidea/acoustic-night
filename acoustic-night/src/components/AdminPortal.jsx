@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { supabase, isConfigured, saveAnonKey, clearAnonKey } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import StatusDropdown from './StatusDropdown'
 import {
   Users,
@@ -17,7 +17,6 @@ import {
   Check,
   Lock,
   ArrowLeft,
-  KeyRound,
   DollarSign,
   AlertCircle,
   X,
@@ -46,7 +45,6 @@ export default function AdminPortal({ onBackToGuestView }) {
   // Modals state
   const [activeReceiptGuest, setActiveReceiptGuest] = useState(null)
   const [showAddGuestModal, setShowAddGuestModal] = useState(false)
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [copiedSummary, setCopiedSummary] = useState(false)
   const [guestToDelete, setGuestToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
@@ -58,9 +56,6 @@ export default function AdminPortal({ onBackToGuestView }) {
   const [newGuestStatus, setNewGuestStatus] = useState('pending')
   const [addGuestLoading, setAddGuestLoading] = useState(false)
   const [addGuestError, setAddGuestError] = useState('')
-
-  // Supabase Key override form state
-  const [keyInput, setKeyInput] = useState('')
 
   // Fetch guests from Supabase
   const fetchGuests = async () => {
@@ -241,13 +236,6 @@ export default function AdminPortal({ onBackToGuestView }) {
     document.body.removeChild(link)
   }
 
-  // Save Anon Key privately
-  const handleSaveKey = (e) => {
-    e.preventDefault()
-    if (!keyInput.trim()) return
-    saveAnonKey(keyInput.trim())
-  }
-
   // Filtered guests
   const attendingList = guests.filter((g) => g.status === 'attending')
   const declinedList = guests.filter((g) => g.status === 'declined')
@@ -349,21 +337,12 @@ export default function AdminPortal({ onBackToGuestView }) {
                 Organizer Admin
               </span>
             </div>
-            <h1 className="font-['Fraunces'] text-2xl sm:text-3xl font-extrabold text-[#FDFBF7] mt-0.5">
+            <h1 className="font-['Fraunces'] text-xl sm:text-3xl font-extrabold text-[#FDFBF7] mt-0.5">
               Attendee & Payment Dashboard
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="px-3 py-2 rounded-xl bg-[#19231E] hover:bg-[#23312A] border border-[#2B3831] text-xs font-medium text-[#B8B2A1] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Supabase Connection Settings"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-[#ECA836]" />
-              <span>Connection</span>
-            </button>
-
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={onBackToGuestView}
               className="px-3 py-2 rounded-xl bg-[#19231E] hover:bg-[#23312A] border border-[#2B3831] text-xs font-medium text-[#B8B2A1] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
@@ -374,7 +353,7 @@ export default function AdminPortal({ onBackToGuestView }) {
 
             <button
               onClick={handleAdminLogout}
-              className="px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-500/30 text-xs font-medium text-red-200 transition-colors cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-500/30 text-xs font-medium text-red-200 transition-colors cursor-pointer sm:ml-0 ml-auto"
             >
               Lock
             </button>
@@ -461,16 +440,16 @@ export default function AdminPortal({ onBackToGuestView }) {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, email, department, or reference number..."
+                placeholder="Search name, email, dept, or ref no..."
                 className="w-full bg-[#121915] border border-[#2B3831] focus:border-[#ECA836] rounded-xl pl-9 pr-4 py-2.5 text-xs text-[#FDFBF7] placeholder-[#66726A] outline-none"
               />
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-[1fr_1fr_auto] sm:flex sm:flex-wrap items-center gap-2">
               <button
                 onClick={() => setShowAddGuestModal(true)}
-                className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#ECA836] to-[#E09825] hover:from-[#F0B348] hover:to-[#ECA836] text-[#121915] font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#ECA836]/10 transition-all cursor-pointer"
+                className="col-span-3 justify-center px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#ECA836] to-[#E09825] hover:from-[#F0B348] hover:to-[#ECA836] text-[#121915] font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#ECA836]/10 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Invite</span>
@@ -478,7 +457,7 @@ export default function AdminPortal({ onBackToGuestView }) {
 
               <button
                 onClick={handleCopyAttending}
-                className="px-3 py-2.5 rounded-xl bg-[#23312A] hover:bg-[#2F4238] border border-[#33463C] text-xs font-semibold text-[#D5CEBD] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="justify-center px-3 py-2.5 rounded-xl bg-[#23312A] hover:bg-[#2F4238] border border-[#33463C] text-xs font-semibold text-[#D5CEBD] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Copy list of attending names"
               >
                 {copiedSummary ? (
@@ -496,7 +475,7 @@ export default function AdminPortal({ onBackToGuestView }) {
 
               <button
                 onClick={handleExportCSV}
-                className="px-3 py-2.5 rounded-xl bg-[#23312A] hover:bg-[#2F4238] border border-[#33463C] text-xs font-semibold text-[#D5CEBD] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="justify-center px-3 py-2.5 rounded-xl bg-[#23312A] hover:bg-[#2F4238] border border-[#33463C] text-xs font-semibold text-[#D5CEBD] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Download attendee list as CSV"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -573,8 +552,75 @@ export default function AdminPortal({ onBackToGuestView }) {
           </div>
         </div>
 
-        {/* Guests Table */}
-        <div className="bg-[#19231E] border border-[#2B3831] rounded-2xl overflow-hidden shadow-2xl">
+        {/* Guests: cards on mobile, table on md+ */}
+        <div className="md:hidden space-y-3">
+          {filteredGuests.length === 0 ? (
+            <div className="bg-[#19231E] border border-[#2B3831] rounded-2xl py-10 text-center text-xs text-[#8F8978]">
+              {loading ? 'Loading guests...' : 'No guests found matching your criteria.'}
+            </div>
+          ) : (
+            filteredGuests.map((g) => (
+              <div key={g.id} className="bg-[#19231E] border border-[#2B3831] rounded-2xl p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-[#FDFBF7] text-sm">{g.name}</span>
+                      {g.dept && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#23312A] text-[#D5CEBD] border border-[#33463C]">
+                          {g.dept}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-mono text-[11px] text-[#A69F8E] truncate mt-0.5">
+                      {g.email || 'No email'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setGuestToDelete(g)}
+                    className="p-2 rounded-lg text-[#8F8978] hover:text-red-400 hover:bg-red-950/40 transition-colors cursor-pointer shrink-0"
+                    title="Delete guest"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-3 border-t border-[#2B3831]/60">
+                  <StatusDropdown
+                    value={g.status}
+                    onChange={(next) => handleUpdateStatus(g.id, next)}
+                  />
+                  <div className="text-right text-[11px] leading-tight">
+                    <span className="font-semibold text-[#D5CEBD] uppercase block">
+                      {g.payment_method || <span className="text-[#636C65]">No method</span>}
+                    </span>
+                    {g.reference_no && (
+                      <span className="font-mono text-[#A69F8E] block mt-0.5">Ref: {g.reference_no}</span>
+                    )}
+                  </div>
+                </div>
+
+                {g.payment_receipt_url && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveReceiptGuest(g)}
+                    className="w-full flex items-center gap-3 p-2 rounded-xl bg-[#121915] border border-[#2B3831] hover:border-[#ECA836]/60 transition-colors cursor-pointer text-left"
+                  >
+                    <img
+                      src={g.payment_receipt_url}
+                      alt="Receipt"
+                      className="w-12 h-12 object-cover rounded-lg border border-[#33463C]"
+                    />
+                    <span className="flex-1 text-xs text-[#ECA836] font-medium">View payment photo</span>
+                    <Eye className="w-4 h-4 text-[#ECA836] mr-1" />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden md:block bg-[#19231E] border border-[#2B3831] rounded-2xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
@@ -692,7 +738,7 @@ export default function AdminPortal({ onBackToGuestView }) {
       {/* 3. Add Guest Modal */}
       {showAddGuestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-md bg-[#19231E] border border-[#2B3831] rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#19231E] border border-[#2B3831] rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#2B3831]">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-[#ECA836]/15 text-[#ECA836] flex items-center justify-center">
@@ -879,76 +925,6 @@ export default function AdminPortal({ onBackToGuestView }) {
                 alt={`Payment receipt from ${activeReceiptGuest.name}`}
                 className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
               />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Supabase Settings Modal (Private connection handling) */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-md bg-[#19231E] border border-[#2B3831] rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2B3831]">
-              <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-[#ECA836]" />
-                <h3 className="font-['Fraunces'] text-lg font-bold text-[#FDFBF7]">
-                  Supabase Connection
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowSettingsModal(false)}
-                className="text-[#8F8978] hover:text-white cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs text-[#B8B2A1]">
-              <div className="p-3 rounded-xl bg-[#121915] border border-[#23312A] space-y-1.5">
-                <span className="text-[10px] text-[#8F8978] uppercase font-bold block">
-                  Project URL
-                </span>
-                <p className="font-mono text-[#FDFBF7] text-xs break-all">
-                  https://mxmepnntyatisdmuwkcm.supabase.co
-                </p>
-                <div className="pt-1 flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${isConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
-                  <span className={isConfigured ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}>
-                    {isConfigured ? 'Status: Connected' : 'Status: Key Missing in .env.local'}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-[11px] leading-relaxed">
-                To prevent confidential or technical database warnings from appearing on the public invitation website, paste your Supabase <strong>anon key</strong> here (or in your project's <code className="bg-black/50 px-1 py-0.5 rounded text-[#ECA836]">.env.local</code> file).
-              </p>
-
-              <form onSubmit={handleSaveKey} className="space-y-2 pt-1">
-                <input
-                  type="text"
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder="Paste anon key (eyJh...)"
-                  className="w-full bg-[#121915] border border-[#2B3831] focus:border-[#ECA836] rounded-xl px-3 py-2 text-xs text-[#FDFBF7] outline-none"
-                />
-                <button
-                  type="submit"
-                  className="w-full py-2 px-3 rounded-xl bg-[#ECA836] hover:bg-[#F0B348] text-[#121915] font-bold text-xs transition-colors cursor-pointer"
-                >
-                  Save Key Permanently
-                </button>
-              </form>
-
-              {isConfigured && (
-                <div className="pt-2 text-right">
-                  <button
-                    onClick={clearAnonKey}
-                    className="text-red-400 hover:underline text-[11px] cursor-pointer"
-                  >
-                    Reset Stored Key
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
