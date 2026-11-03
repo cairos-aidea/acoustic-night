@@ -1,0 +1,10 @@
+{
+  "name": "acoustic-night-root",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run dev --prefix acoustic-night",
+    "build": "npm run build --prefix acoustic-night",
+    "preview": "npm run preview --prefix acoustic-night"
+  }
+}
