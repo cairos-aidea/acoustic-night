@@ -8,6 +8,7 @@ import {
   Clock,
   Search,
   Plus,
+  Pencil,
   Image as ImageIcon,
   ExternalLink,
   Trash2,
@@ -67,6 +68,14 @@ export default function AdminPortal({ onBackToGuestView }) {
   const [copiedSummary, setCopiedSummary] = useState(false)
   const [guestToDelete, setGuestToDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Edit guest form state
+  const [guestToEdit, setGuestToEdit] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editDept, setEditDept] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState('')
 
   // Add guest form state
   const [newGuestName, setNewGuestName] = useState('')
@@ -176,6 +185,62 @@ export default function AdminPortal({ onBackToGuestView }) {
       alert(`Failed to delete guest: ${err.message}. Ensure delete policy is applied in Supabase.`)
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const openEditGuest = (g) => {
+    setGuestToEdit(g)
+    setEditName(g.name || '')
+    setEditEmail(g.email || '')
+    setEditDept(g.dept || '')
+    setEditError('')
+  }
+
+  const handleEditGuest = async (e) => {
+    e.preventDefault()
+    setEditError('')
+
+    const cleanName = editName.trim()
+    const cleanEmail = editEmail.trim().toLowerCase()
+    const cleanDept = editDept.trim().toUpperCase()
+
+    if (!cleanName) {
+      setEditError('Please enter the guest name.')
+      return
+    }
+    if (!cleanEmail) {
+      setEditError('Please enter a valid email address.')
+      return
+    }
+    if (guests.some((g) => g.id !== guestToEdit.id && g.email && g.email.toLowerCase() === cleanEmail)) {
+      setEditError('Another guest already uses this email.')
+      return
+    }
+
+    setEditLoading(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('guests')
+        .update({
+          name: cleanName,
+          email: cleanEmail,
+          dept: cleanDept || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', guestToEdit.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setGuests((prev) => prev.map((g) => (g.id === data.id ? data : g)))
+      setGuestToEdit(null)
+    } catch (err) {
+      console.error('Error updating guest:', err)
+      setEditError(err.message || 'Failed to update guest.')
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -626,14 +691,24 @@ export default function AdminPortal({ onBackToGuestView }) {
                       {g.email || 'No email'}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setGuestToDelete(g)}
-                    className="p-2 rounded-lg text-[#8F8978] hover:text-red-400 hover:bg-red-950/40 transition-colors cursor-pointer shrink-0"
-                    title="Delete guest"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openEditGuest(g)}
+                      className="p-2 rounded-lg text-[#8F8978] hover:text-[#ECA836] hover:bg-[#ECA836]/10 transition-colors cursor-pointer"
+                      title="Edit guest"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGuestToDelete(g)}
+                      className="p-2 rounded-lg text-[#8F8978] hover:text-red-400 hover:bg-red-950/40 transition-colors cursor-pointer"
+                      title="Delete guest"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 pt-3 border-t border-[#2B3831]/60">
@@ -775,7 +850,15 @@ export default function AdminPortal({ onBackToGuestView }) {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => openEditGuest(g)}
+                          className="p-1.5 rounded-lg text-[#8F8978] hover:text-[#ECA836] hover:bg-[#ECA836]/10 transition-colors cursor-pointer"
+                          title="Edit guest"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => setGuestToDelete(g)}
@@ -891,6 +974,93 @@ export default function AdminPortal({ onBackToGuestView }) {
                   className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#ECA836] to-[#E09825] text-[#121915] font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
                 >
                   {addGuestLoading ? 'Adding...' : 'Add Invitee'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Guest Modal */}
+      {guestToEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-[#19231E] border border-[#2B3831] rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2B3831]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#ECA836]/15 text-[#ECA836] flex items-center justify-center">
+                  <Pencil className="w-4 h-4" />
+                </div>
+                <h3 className="font-['Fraunces'] text-lg font-bold text-[#FDFBF7]">Edit Invitee</h3>
+              </div>
+              <button
+                onClick={() => setGuestToEdit(null)}
+                disabled={editLoading}
+                className="text-[#8F8978] hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-2.5 rounded-xl bg-red-950/70 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleEditGuest} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-medium text-[#D5CEBD] mb-1">
+                  Full Name <span className="text-[#ECA836]">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-[#121915] border border-[#2B3831] focus:border-[#ECA836] rounded-xl px-3.5 py-2.5 text-xs text-[#FDFBF7] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#D5CEBD] mb-1">
+                  Email Address <span className="text-[#ECA836]">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full bg-[#121915] border border-[#2B3831] focus:border-[#ECA836] rounded-xl px-3.5 py-2.5 text-xs text-[#FDFBF7] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#D5CEBD] mb-1">Department</label>
+                <input
+                  type="text"
+                  value={editDept}
+                  onChange={(e) => setEditDept(e.target.value)}
+                  placeholder="e.g. DES, EO, ST5"
+                  className="w-full bg-[#121915] border border-[#2B3831] focus:border-[#ECA836] rounded-xl px-3.5 py-2.5 text-xs text-[#FDFBF7] outline-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGuestToEdit(null)}
+                  disabled={editLoading}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-[#2B3831] hover:bg-[#23312A] text-xs font-semibold text-[#B8B2A1] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#ECA836] to-[#E09825] text-[#121915] font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {editLoading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
