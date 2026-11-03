@@ -278,6 +278,7 @@ export default function AdminPortal({ onBackToGuestView }) {
   const withReceiptList = guests.filter((g) => Boolean(g.payment_receipt_url))
   const isCashPending = (g) => g.status === 'attending' && g.payment_method === 'cash' && !g.cash_collected
   const cashPendingList = guests.filter(isCashPending)
+  const paidCount = attendingList.length - cashPendingList.length
 
   const filteredGuests = guests.filter((g) => {
     const matchesFilter =
@@ -462,7 +463,7 @@ export default function AdminPortal({ onBackToGuestView }) {
             </span>
             <div className="flex items-baseline gap-2">
               <span className="font-['Fraunces'] text-3xl font-bold text-[#ECA836]">
-                ₱{(attendingList.length * 300).toLocaleString()}
+                ₱{(paidCount * 300).toLocaleString()}
               </span>
               <span className="text-[10px] text-[#8F8978]">collected</span>
             </div>
