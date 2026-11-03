@@ -28,6 +28,25 @@ import {
 
 const ADMIN_PASSCODE = 'acoustic2026'
 
+function CashToggle({ guest, onToggle }) {
+  const collected = Boolean(guest.cash_collected)
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(guest)}
+      title={collected ? 'Mark cash as not yet collected' : 'Mark cash as collected'}
+      className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold normal-case cursor-pointer transition-colors ${
+        collected
+          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/40 hover:border-emerald-500/70'
+          : 'bg-[#282116] text-amber-300 border-amber-600/30 hover:border-amber-500/60'
+      }`}
+    >
+      {collected ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+      {collected ? 'Collected' : 'Not yet'}
+    </button>
+  )
+}
+
 export default function AdminPortal({ onBackToGuestView }) {
   // Passcode gate state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -119,6 +138,21 @@ export default function AdminPortal({ onBackToGuestView }) {
       )
     } catch (err) {
       alert(`Failed to update status: ${err.message}`)
+    }
+  }
+
+  const handleToggleCashCollected = async (guest) => {
+    const next = !guest.cash_collected
+    setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, cash_collected: next } : g)))
+
+    const { error } = await supabase
+      .from('guests')
+      .update({ cash_collected: next, updated_at: new Date().toISOString() })
+      .eq('id', guest.id)
+
+    if (error) {
+      setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, cash_collected: !next } : g)))
+      alert(`Failed to update cash status: ${error.message}. Run the cash_collected migration in Supabase.`)
     }
   }
 
@@ -214,13 +248,14 @@ export default function AdminPortal({ onBackToGuestView }) {
 
   // Export to CSV
   const handleExportCSV = () => {
-    const headers = ['Name', 'Email', 'Department', 'Status', 'Payment Method', 'Reference No', 'Receipt URL', 'Updated At']
+    const headers = ['Name', 'Email', 'Department', 'Status', 'Payment Method', 'Cash Collected', 'Reference No', 'Receipt URL', 'Updated At']
     const rows = guests.map((g) => [
       `"${g.name}"`,
       `"${g.email || ''}"`,
       `"${g.dept || ''}"`,
       `"${g.status}"`,
       `"${g.payment_method || ''}"`,
+      `"${g.payment_method === 'cash' ? (g.cash_collected ? 'Yes' : 'No') : ''}"`,
       `"${g.reference_no || ''}"`,
       `"${g.payment_receipt_url || ''}"`,
       `"${g.updated_at || ''}"`
@@ -241,6 +276,8 @@ export default function AdminPortal({ onBackToGuestView }) {
   const declinedList = guests.filter((g) => g.status === 'declined')
   const pendingList = guests.filter((g) => g.status === 'pending')
   const withReceiptList = guests.filter((g) => Boolean(g.payment_receipt_url))
+  const isCashPending = (g) => g.status === 'attending' && g.payment_method === 'cash' && !g.cash_collected
+  const cashPendingList = guests.filter(isCashPending)
 
   const filteredGuests = guests.filter((g) => {
     const matchesFilter =
@@ -254,6 +291,8 @@ export default function AdminPortal({ onBackToGuestView }) {
         ? g.status === 'pending'
         : statusFilter === 'receipt'
         ? Boolean(g.payment_receipt_url)
+        : statusFilter === 'cash_pending'
+        ? isCashPending(g)
         : true
 
     const q = search.toLowerCase()
@@ -549,6 +588,17 @@ export default function AdminPortal({ onBackToGuestView }) {
               <ImageIcon className="w-3.5 h-3.5" />
               With Payment Photo ({withReceiptList.length})
             </button>
+            <button
+              onClick={() => setStatusFilter('cash_pending')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+                statusFilter === 'cash_pending'
+                  ? 'bg-amber-800/80 text-white border border-amber-500/50'
+                  : 'bg-[#121915] text-amber-300/80 hover:text-amber-200'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              Cash to Collect ({cashPendingList.length})
+            </button>
           </div>
         </div>
 
@@ -594,6 +644,9 @@ export default function AdminPortal({ onBackToGuestView }) {
                     <span className="font-semibold text-[#D5CEBD] uppercase block">
                       {g.payment_method || <span className="text-[#636C65]">No method</span>}
                     </span>
+                    {g.payment_method === 'cash' && (
+                      <CashToggle guest={g} onToggle={handleToggleCashCollected} />
+                    )}
                     {g.reference_no && (
                       <span className="font-mono text-[#A69F8E] block mt-0.5">Ref: {g.reference_no}</span>
                     )}
@@ -674,6 +727,11 @@ export default function AdminPortal({ onBackToGuestView }) {
                       {/* Payment Method */}
                       <td className="py-3 px-4 text-[11px] font-semibold text-[#D5CEBD] uppercase">
                         {g.payment_method || <span className="text-[#636C65]">-</span>}
+                        {g.payment_method === 'cash' && (
+                          <div>
+                            <CashToggle guest={g} onToggle={handleToggleCashCollected} />
+                          </div>
+                        )}
                       </td>
 
                       {/* Payment Photo Proof */}

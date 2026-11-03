@@ -14,12 +14,14 @@ CREATE TABLE IF NOT EXISTS public.guests (
   payment_receipt_url TEXT,
   reference_no TEXT,
   payment_method TEXT CHECK (payment_method IN ('gcash', 'cash')),
+  cash_collected BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- For databases created before payment_method existed
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS payment_method TEXT CHECK (payment_method IN ('gcash', 'cash'));
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS cash_collected BOOLEAN NOT NULL DEFAULT false;
 
 -- Enable RLS on guests
 ALTER TABLE public.guests ENABLE ROW LEVEL SECURITY;
